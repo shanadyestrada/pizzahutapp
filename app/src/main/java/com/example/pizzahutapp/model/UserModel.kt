@@ -1,4 +1,4 @@
-package com.example.pizzahutapp.screen.model
+package com.example.pizzahutapp.model
 
 data class UserModel(
     val nombre : String,

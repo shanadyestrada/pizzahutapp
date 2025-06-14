@@ -26,11 +26,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.viewmodel.AuthViewModel
 
 @Composable
-fun SignUpScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = viewModel()) {
+fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
 
     var email by remember {
         mutableStateOf("")
@@ -42,6 +43,10 @@ fun SignUpScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = v
 
     var password by remember {
         mutableStateOf("")
+    }
+
+    var isLoading by remember {
+        mutableStateOf(false)
     }
 
     var context = LocalContext.current
@@ -102,18 +107,26 @@ fun SignUpScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = v
 
         Spacer(modifier = Modifier.height(20.dp))
         Button(onClick = {
+            isLoading = true
             authViewModel.signup(email, nombre, password) {sucess,errorMesagge ->
                 if (sucess) {
-
+                    isLoading = false
+                    navController.navigate("home") {
+                        popUpTo("auth") {
+                            inclusive = true
+                        }
+                    }
                 } else {
+                    isLoading = false
                     AppUtil.showToast(context,errorMesagge?: "Algo salió mal..")
                 }
             }
         },
+            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth()
                 .height(60.dp)
         ) {
-            Text(text = "Registrarse", fontSize = 22.sp)
+            Text(text = if (isLoading) "Creando la cuenta.." else "Registrarse", fontSize = 22.sp)
         }
 
     }
