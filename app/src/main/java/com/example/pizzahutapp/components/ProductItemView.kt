@@ -23,16 +23,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.GlobalNavigation
 import com.example.pizzahutapp.model.ProductModel // Asegúrate de que esta importación sea correcta
 
 @Composable
 fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
+
+    var context = LocalContext.current
 
     Card(
         modifier = modifier
@@ -90,7 +94,7 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { /* Lógica para agregar al carrito */ },
+                    onClick = { AppUtil.addToCart(context, product.id) },
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // <-- ¡CAMBIO AQUÍ!

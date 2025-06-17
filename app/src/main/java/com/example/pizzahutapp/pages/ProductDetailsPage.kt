@@ -20,10 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.model.ProductModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -34,6 +36,8 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
     var product by remember {
         mutableStateOf(ProductModel())
     }
+
+    var context = LocalContext.current
 
     LaunchedEffect(key1 = Unit) {
         Firebase.firestore.collection("data").document("stock")
@@ -89,7 +93,9 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
 
         Spacer(modifier = Modifier.padding(8.dp))
 
-        Button(onClick = {},
+        Button(onClick = {
+            AppUtil.addToCart(context, productId)
+        },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text(text = "Agregar al Carrito", fontSize = 18.sp)
