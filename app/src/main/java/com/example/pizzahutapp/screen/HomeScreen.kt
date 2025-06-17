@@ -50,6 +50,9 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
         mutableStateOf(0)
     }
 
+
+
+
     Scaffold (bottomBar = {
         NavigationBar {
             navItemList.forEachIndexed { index, navItem ->
