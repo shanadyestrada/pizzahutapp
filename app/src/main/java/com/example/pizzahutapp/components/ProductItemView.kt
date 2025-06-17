@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.pizzahutapp.GlobalNavigation
 import com.example.pizzahutapp.model.ProductModel // Asegúrate de que esta importación sea correcta
 
 @Composable
@@ -36,7 +37,10 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
     Card(
         modifier = modifier
             .padding(8.dp)
-            .fillMaxWidth(), // Ocupa todo el ancho si está en una columna o LazyColumn
+            .clickable {
+                GlobalNavigation.navController.navigate("product-details/" + product.id)
+            }
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(8.dp)
@@ -48,17 +52,17 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
             AsyncImage(
                 model = product.image,
                 contentDescription = product.nombre,
-                contentScale = ContentScale.Crop, // Para que la imagen llene el espacio y se recorte
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp) // Altura para la imagen
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)) // Recorta las esquinas superiores de la imagen
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             )
 
             // Contenido de texto
-            Column(modifier = Modifier.padding(16.dp)) { // Padding alrededor del contenido principal
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = product.nombre.uppercase(), // Nombre en mayúsculas como en la imagen
+                    text = product.nombre.uppercase(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     maxLines = 1,
