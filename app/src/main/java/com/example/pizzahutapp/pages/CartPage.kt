@@ -3,9 +3,15 @@ package com.example.pizzahutapp.pages
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +24,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pizzahutapp.AppUtil
+import com.example.pizzahutapp.GlobalNavigation
 import com.example.pizzahutapp.components.CartItemView
 import com.example.pizzahutapp.model.UserModel
 import com.google.firebase.Firebase
@@ -60,6 +68,15 @@ fun CartPage(modifier: Modifier = Modifier) {
             items(userModel.value.cartItems.toList(), key = { it.first}) { (productId,qty) ->
                 CartItemView(productId = productId, qty = qty)
             }
+        }
+
+        Button(
+            onClick = {
+                GlobalNavigation.navController.navigate("checkout")
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            Text(text = "Checkout", fontSize = 16.sp)
         }
     }
 }
