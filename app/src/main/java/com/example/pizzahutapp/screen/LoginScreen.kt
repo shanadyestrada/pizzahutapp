@@ -164,13 +164,15 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "¿Usuario nuevo? ", fontSize = 14.sp)
-            TextButton(onClick = { /* TODO: Navegar a la pantalla de registro */ }) {
+            TextButton(onClick = {
+                navController.navigate("signup")
+            }) {
                 Text(
                     text = "Crea tu cuenta aquí",
                     color = MaterialTheme.colorScheme.primary,
                     textDecoration = TextDecoration.Underline,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold // Para que resalte un poco más
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
