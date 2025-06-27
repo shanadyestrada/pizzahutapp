@@ -22,15 +22,20 @@ class AuthViewModel  : ViewModel() {
             }
     }
 
-    fun signup(email : String,
-               nombre : String,
-               password : String,
-               onResult : (Boolean,String?) -> Unit) {
+    fun signup(
+        email: String,
+        nombre: String,
+        apellidos: String,
+        password: String,
+        fechaNacimiento: String,
+        telefono: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
         auth.createUserWithEmailAndPassword(email,password)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     var userId = it.result?.user?.uid
-                    val userModel = UserModel(nombre, email, userId!!)
+                    val userModel = UserModel(nombre,apellidos, fechaNacimiento, telefono, email, userId!!)
                     firestore.collection("usuarios").document(userId)
                         .set(userModel)
                         .addOnCompleteListener { dbTask->
