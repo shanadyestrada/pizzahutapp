@@ -62,4 +62,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation ("io.coil-kt:coil-compose:2.2.0")
     implementation("com.tbuonomo:dotsindicator:5.1.0")
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
 }

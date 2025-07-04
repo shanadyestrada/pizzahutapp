@@ -12,7 +12,20 @@
           "package_name": "com.example.pizzahutapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "181854150576-54p5afgth9i09nci70vtbk37ms8ngvnp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pizzahutapp",
+            "certificate_hash": "b935a7363a43880286f97335536cb98f92f42980"
+          }
+        },
+        {
+          "client_id": "181854150576-obktm0rjv22ddvnkqr42d9ke51i2tpm2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBblkXiAvb3HWKpeZ6tuVZVji_7McOmU84"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "181854150576-obktm0rjv22ddvnkqr42d9ke51i2tpm2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

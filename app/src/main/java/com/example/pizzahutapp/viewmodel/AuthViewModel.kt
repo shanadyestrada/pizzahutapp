@@ -1,5 +1,8 @@
 package com.example.pizzahutapp.viewmodel
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import com.example.pizzahutapp.model.UserModel
 import com.google.firebase.Firebase
@@ -10,6 +13,24 @@ class AuthViewModel  : ViewModel() {
 
     private val auth = Firebase.auth
     private val firestore = Firebase.firestore
+
+    private lateinit var credentialManager: CredentialManager
+
+    fun initCredentialManager(context: Context){
+        credentialManager = CredentialManager.create(context)
+    }
+
+    suspend fun signInWithGoogleCredentialManager(context: Context): Pair<Boolean, String?>{
+        val googleClientId = context.getString(com.example.pizzahutapp.R.string.default_web_client_id)
+
+        val getCredentialRequest = GetCredentialRequest.Builder()
+            .addCredentialOption(
+                com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.createGet
+                    (googleClientId, null)
+                    .build()
+            )
+            .build()
+    }
 
     fun login (email: String, password: String, onResult : (Boolean,String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
