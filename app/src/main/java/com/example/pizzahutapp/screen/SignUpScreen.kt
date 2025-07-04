@@ -49,6 +49,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.pizzahutapp.R
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
@@ -81,6 +88,10 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
         mutableStateOf(false)
     }
 
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
+
     var acceptsTerms by remember { mutableStateOf(false) }
 
     var context = LocalContext.current
@@ -110,10 +121,13 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
         datePicker.maxDate = System.currentTimeMillis()
     }
 
+    val scrollState = rememberScrollState()
+
 
     Column (modifier = Modifier
         .fillMaxSize()
-        .padding(32.dp),
+        .padding(32.dp)
+        .verticalScroll(scrollState),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
@@ -227,7 +241,16 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
                 Text(text = "Contraseña")
             },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = if(passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val imagePainter = if (passwordVisible)
+                    painterResource(id = R.drawable.ic_visibility)
+                else painterResource(id = R.drawable.ic_visibility_off)
+                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(painter = imagePainter, contentDescription = description, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))

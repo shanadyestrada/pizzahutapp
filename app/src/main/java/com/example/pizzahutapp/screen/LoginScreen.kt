@@ -43,6 +43,7 @@ import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.R // Asegúrate de que este sea el paquete correcto para tus recursos
 import com.example.pizzahutapp.ui.theme.BrixtonLeadFontFamily
 import com.example.pizzahutapp.viewmodel.AuthViewModel
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
@@ -53,6 +54,10 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
 
     var password by remember {
         mutableStateOf("")
+    }
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
     }
 
     var isLoading by remember {
@@ -106,7 +111,19 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
             onValueChange = { password = it },
             label = { Text(text = "Contraseña") },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val imagePainter = if (passwordVisible)
+                    painterResource(id= R.drawable.ic_visibility)
+                else
+                    painterResource(id = R.drawable.ic_visibility_off)
+
+                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                IconButton(onClick = {passwordVisible = !passwordVisible}) {
+                    Icon(painter = imagePainter, contentDescription = description, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         )
 
         // Enlace "¿Olvidaste tu contraseña?"
