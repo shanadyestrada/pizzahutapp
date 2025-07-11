@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -173,6 +174,41 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 fontWeight = FontWeight.Bold
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //boton iniciar sesion de google
+        Button(
+            onClick = {
+                isLoading = true
+                authViewModel.signInWithGoogleCredentialManager(context) { success, errorMessage ->
+                    isLoading = false
+                    if (success) {
+                        navController.navigate("home") {
+                            popUpTo("auth") {
+                                inclusive = true
+                            }
+                        }
+                    } else {
+                        AppUtil.showToast(context, errorMessage ?: "Error desconocido con Google Sign-In.")
+                    }
+                }
+            },
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_google), // Asegúrate de tener este drawable
+                contentDescription = "Google Icon",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Iniciar sesión con Google", fontSize = 18.sp)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Enlace "¿Usuario nuevo? Crea tu cuenta aquí"
         Row(
