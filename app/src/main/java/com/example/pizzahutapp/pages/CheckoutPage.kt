@@ -1,115 +1,102 @@
 package com.example.pizzahutapp.pages
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pizzahutapp.model.ProductModel
 import com.example.pizzahutapp.model.UserModel
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 
 @Composable
-fun CheckoutPage (modifier: Modifier = Modifier) {
+fun CheckoutPage(modifier: Modifier = Modifier) {
 
-    val userModel = remember {
-        mutableStateOf(UserModel())
-    }
+    val userModel = remember { mutableStateOf(UserModel()) }
+    val productMap = remember { mutableStateMapOf<String, ProductModel>() }
+    val total = remember { mutableStateOf(0f) }
 
-    val productList = remember {
-        mutableStateListOf<ProductModel>()
-    }
+    val context = LocalContext.current
 
-    val total = remember { // Cambiado de 'subtotal' a 'total' para el valor final
-        mutableStateOf(0f)
-    }
-
-    fun calculateTotal () { // Renombrada la función para reflejar que ahora es el total final
-        total.value = 0f // Reiniciar total antes de cada cálculo
-        productList.forEach { product ->
-            if (product.precio.isNotEmpty()) {
-                val qty = userModel.value.cartItems[product.id] ?: 0
-                total.value +=  product.precio.toFloat() * qty // Acumular al total
+    fun calculateTotal() {
+        total.value = 0f
+        userModel.value.cartItems.forEach { (fullId, qty) ->
+            val product = productMap[fullId]
+            if (product != null && product.precio.isNotEmpty()) {
+                total.value += product.precio.toFloat() * qty
             }
         }
     }
 
-    LaunchedEffect(key1 = Unit) {
-        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-        if (currentUserUid == null) {
-            return@LaunchedEffect
-        }
+    LaunchedEffect(Unit) {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
 
-        Firebase.firestore.collection("usuarios")
+        val userDoc = com.google.firebase.Firebase.firestore.collection("usuarios")
             .document(currentUserUid)
-            .get().addOnCompleteListener {
-                if (it.isSuccessful) {
-                    val result = it.result.toObject(UserModel::class.java)
-                    if (result!= null) {
-                        userModel.value = result
 
-                        val productIdsInCart = userModel.value.cartItems.keys.toList()
-                        if (productIdsInCart.isNotEmpty()) {
-                            Firebase.firestore.collection("data")
-                                .document("stock").collection("productos")
-                                .whereIn("id", productIdsInCart)
-                                .get().addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        productList.clear()
-                                        val resultProducts = task.result.toObjects(ProductModel::class.java)
-                                        productList.addAll(resultProducts)
-                                        calculateTotal()
-                                    }
+        userDoc.get().addOnSuccessListener { doc ->
+            val user = doc.toObject<UserModel>()
+            if (user != null) {
+                userModel.value = user
+
+                val ids = user.cartItems.keys.map { it.split("_")[0] }.distinct()
+                if (ids.isNotEmpty()) {
+                    com.google.firebase.Firebase.firestore.collection("data")
+                        .document("stock").collection("productos")
+                        .whereIn("id", ids)
+                        .get()
+                        .addOnSuccessListener { snapshot ->
+                            val products = snapshot.toObjects(ProductModel::class.java)
+
+                            productMap.clear()
+                            user.cartItems.forEach { (fullId, _) ->
+                                val id = fullId.split("_")[0]
+                                val product = products.find { it.id == id }
+                                if (product != null) {
+                                    productMap[fullId] = product
                                 }
-                        } else {
-                            total.value = 0f // Si no hay items, el total es 0
+                            }
+
+                            calculateTotal()
                         }
-                    }
                 }
             }
+        }
     }
 
-    Column (
-        modifier = Modifier
+    Column(
+        modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
     ) {
-        Text(text = "Checkout",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold)
+        Text(text = "Checkout", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar el subtotal por cada producto
-        productList.forEach { product ->
-            val qty = userModel.value.cartItems[product.id] ?: 0
-            if (qty > 0 && product.precio.isNotEmpty()) {
-                val productSubtotal = product.precio.toFloat() * qty
-                RowCheckoutItems(
-                    title = "${product.nombre} (x$qty)",
-                    value = "S/. ${String.format("%.2f", productSubtotal)}"
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+        userModel.value.cartItems.forEach { (fullId, qty) ->
+            val parts = fullId.split("_")
+            val tamano = parts.getOrNull(1) ?: ""
+            val corteza = parts.getOrNull(2) ?: ""
+            val product = productMap[fullId] ?: return@forEach
+            val subtotal = product.precio.toFloat() * qty
+
+            val nameBuilder = StringBuilder(product.nombre)
+            if (tamano.isNotEmpty()) nameBuilder.append(" - ${tamano.replaceFirstChar { it.uppercase() }}")
+            if (corteza.isNotEmpty()) nameBuilder.append(" (${corteza.replaceFirstChar { it.uppercase() }})")
+
+            RowCheckoutItems(
+                title = "${nameBuilder} x$qty",
+                value = "S/. ${String.format("%.2f", subtotal)}"
+            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -129,16 +116,16 @@ fun CheckoutPage (modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
-
     }
 }
 
 @Composable
-fun RowCheckoutItems(title : String, value : String) {
-    Row (
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+fun RowCheckoutItems(title: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text (text = title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
         Text(text = value, fontSize = 18.sp)
     }
 }

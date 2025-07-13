@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.GlobalNavigation
@@ -42,7 +43,7 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
         modifier = modifier
             .padding(8.dp)
             .clickable {
-                GlobalNavigation.navController.navigate("product-details/" + product.id)
+                GlobalNavigation.navController.navigate("product-details/${product.id}")
             }
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -94,13 +95,16 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { AppUtil.addToCart(context, product.id) },
+                    onClick = {
+                        GlobalNavigation.navController.navigate("product-details/${product.id}")
+                    },
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // <-- ¡CAMBIO AQUÍ!
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(text = "Agregar al Carrito", fontSize = 16.sp)
+                    Text(text = "Ver Producto", fontSize = 16.sp)
                 }
+
 
             }
         }

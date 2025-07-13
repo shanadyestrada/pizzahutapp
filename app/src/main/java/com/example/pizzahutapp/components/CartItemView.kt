@@ -43,26 +43,34 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
 @Composable
-fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) {
+fun CartItemView(modifier: Modifier = Modifier, productId: String, qty: Long) {
+
+    val parts = productId.split("_")
+    val id = parts.getOrNull(0) ?: ""
+    val tamano = parts.getOrNull(1) ?: ""
+    val corteza = parts.getOrNull(2) ?: ""
 
     var product by remember {
         mutableStateOf(ProductModel())
     }
 
-    LaunchedEffect(key1 = Unit) {
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = id) {
         Firebase.firestore.collection("data")
-            .document("stock").collection("productos")
-            .document(productId).get().addOnCompleteListener {
+            .document("stock")
+            .collection("productos")
+            .document(id)
+            .get()
+            .addOnCompleteListener {
                 if (it.isSuccessful) {
                     val result = it.result.toObject(ProductModel::class.java)
-                    if (result!=null) {
+                    if (result != null) {
                         product = result
                     }
                 }
             }
     }
-
-    var context = LocalContext.current
 
     Card(
         modifier = modifier
@@ -72,20 +80,25 @@ fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) 
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Row (
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Imagen del producto
+        Row(modifier = Modifier.fillMaxWidth()) {
+
+            // Imagen
             AsyncImage(
                 model = product.image,
                 contentDescription = product.nombre,
                 modifier = Modifier
                     .height(100.dp)
                     .width(100.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
             )
 
-            // Contenido de texto
-            Column(modifier = Modifier.padding(16.dp).weight(1f)) {
+            // Contenido
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .weight(1f)
+            ) {
                 Text(
                     text = product.nombre.uppercase(),
                     fontWeight = FontWeight.Bold,
@@ -93,29 +106,41 @@ fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) 
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // Mostrar tamaño y corteza solo si el producto tiene variaciones
+                if (product.variaciones != null) {
+                    if (tamano.isNotEmpty()) {
+                        Text(text = "Tamaño: ${tamano.replaceFirstChar { it.uppercase() }}", fontSize = 12.sp)
+                    }
+                    if (corteza.isNotEmpty()) {
+                        Text(text = "Corteza: ${corteza.replaceFirstChar { it.uppercase() }}", fontSize = 12.sp)
+                    }
+                }
+
                 Text(
                     text = "S/. ${product.precio}",
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.SemiBold
                 )
 
-                Row (
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    IconButton(onClick = {AppUtil.removeFromCart(context, productId)}) {
-                        Text(text = "-", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        AppUtil.removeFromCart(context, id, tamano, corteza)
+                    }) {
+                        Text(text = "-", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    Text(text= "$qty", fontSize = 16.sp)
+                    Text(text = "$qty", fontSize = 16.sp)
 
-                    IconButton(onClick = {AppUtil.addToCart(context,productId)}) {
-                        Text(text = "+", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
+                    IconButton(onClick = {
+                        AppUtil.addToCart(context, id, tamano, corteza)
+                    }) {
+                        Text(text = "+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
-
-
-            IconButton(onClick = { AppUtil.removeFromCart(context, productId, removeAll = true) }) {
+            IconButton(onClick = {
+                AppUtil.removeFromCart(context, id, tamano, corteza, removeAll = true)
+            }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Eliminar del carrito"
@@ -123,5 +148,4 @@ fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) 
             }
         }
     }
-
 }
