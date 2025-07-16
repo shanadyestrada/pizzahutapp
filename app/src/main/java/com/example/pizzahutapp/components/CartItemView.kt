@@ -1,6 +1,7 @@
 package com.example.pizzahutapp.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,23 +44,31 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
 @Composable
-fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) {
+fun CartItemView(modifier: Modifier = Modifier, cartItemId: String, itemDetails: Map<String, Any>) {
 
-    var product by remember {
-        mutableStateOf(ProductModel())
-    }
+    val productId = itemDetails["productId"] as? String ?: ""
+    val qty = itemDetails["quantity"] as? Long ?: 0L
+    val price = itemDetails["price"]?.toString() ?: "0.00"
+    val variationType = itemDetails["variationType"] as? String ?: ""
+    val variationName = itemDetails["varaitionName"] as? String ?: ""
 
-    LaunchedEffect(key1 = Unit) {
-        Firebase.firestore.collection("data")
-            .document("stock").collection("productos")
-            .document(productId).get().addOnCompleteListener {
-                if (it.isSuccessful) {
-                    val result = it.result.toObject(ProductModel::class.java)
-                    if (result!=null) {
-                        product = result
+    var productBaseInfo by remember { mutableStateOf(ProductModel()) }
+
+    LaunchedEffect(key1 = productId) {
+        if(productId.isNotBlank()){
+            Firebase.firestore.collection("data")
+                .document("stock").collection("productos")
+                .document(productId).get().addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        val result = it.result.toObject(ProductModel::class.java)
+                        if (result!=null) {
+                            productBaseInfo = result
+                        }
+                    } else{
+
                     }
                 }
-            }
+        }
     }
 
     var context = LocalContext.current
@@ -73,41 +82,53 @@ fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) 
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Row (
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // Imagen del producto
             AsyncImage(
-                model = product.image,
-                contentDescription = product.nombre,
+                model = productBaseInfo.image,
+                contentDescription = productBaseInfo.nombre,
                 modifier = Modifier
                     .height(100.dp)
                     .width(100.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
             )
 
             // Contenido de texto
             Column(modifier = Modifier.padding(16.dp).weight(1f)) {
                 Text(
-                    text = product.nombre.uppercase(),
+                    text = if(variationType.isNotBlank() && variationName.isNotBlank()){
+                        "${productBaseInfo.nombre.uppercase()} (${variationType.replaceFirstChar{it.titlecase() }} - ${variationName.replaceFirstChar { it.titlecase() }})"
+                    } else {
+                        productBaseInfo.nombre.uppercase()
+                    },
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 16.sp
                 )
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "S/. ${product.precio}",
+                    text = "S/. ${price}",
                     fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
                 )
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row (
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ){
-                    IconButton(onClick = {AppUtil.removeFromCart(context, productId)}) {
+                    IconButton(onClick = { AppUtil.removeFromCart(context, productId, variationType, variationName)}) {
                         Text(text = "-", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
                     }
 
                     Text(text= "$qty", fontSize = 16.sp)
 
-                    IconButton(onClick = {AppUtil.addToCart(context,productId)}) {
+                    IconButton(onClick = {AppUtil.addToCart(context, productId, variationType, variationName, price)}) {
                         Text(text = "+", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
                     }
                 }
@@ -115,10 +136,14 @@ fun CartItemView(modifier: Modifier = Modifier, productId : String, qty : Long) 
 
 
 
-            IconButton(onClick = { AppUtil.removeFromCart(context, productId, removeAll = true) }) {
+            IconButton(
+                onClick = { AppUtil.removeFromCart(context, productId, variationType, variationName,removeAll = true) },
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar del carrito"
+                    contentDescription = "Eliminar del carrito",
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }

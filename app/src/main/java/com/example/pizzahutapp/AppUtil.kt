@@ -9,8 +9,10 @@ import com.google.firebase.firestore.firestore
 
 object AppUtil {
 
-    fun showToast(context: Context, mesagge: String) {
-        Toast.makeText(context, mesagge, Toast.LENGTH_LONG).show()
+    lateinit var applicationContext: Context // Add this line
+
+    fun showToast(context : Context, message : String) {
+        Toast.makeText(context,message,Toast.LENGTH_LONG).show()
     }
 
     fun addToCart(
@@ -30,15 +32,14 @@ object AppUtil {
                 productId
             }
 
-        userDoc.get().addOnCompleteListener {
-            if (it.isSuccessful) {
-                val currentCart =
-                    it.result.get("cartItems") as? Map<String, Map<String, Any>> ?: emptyMap()
+        userDoc.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val currentCart = task.result.get("cartItems") as? Map<String, Map<String, Any>> ?: emptyMap()
                 val existingItem = currentCart[cartItemId]
                 val currentQuantity = (existingItem?.get("quantity") as? Long) ?: 0L
                 val updatedQuantity = currentQuantity + 1;
 
-                val itemDetails = mutableMapOf<String, Any>(
+                val itemDetails: MutableMap<String, Any> = mutableMapOf(
                     "productId" to productId as Any,
                     "quantity" to updatedQuantity as Any,
                     "price" to (selectedPrice.toDoubleOrNull() ?: 0.0) as Any,
@@ -68,7 +69,7 @@ object AppUtil {
                     }
 
             }else{
-                showToast(context, "No se pudo obtener el carrito: ${it.exception?.message}")
+                showToast(context, "No se pudo obtener el carrito: ${task.exception?.message}")
             }
         }
     }
@@ -76,8 +77,8 @@ object AppUtil {
     fun removeFromCart(
         context: Context,
         productId: String,
-        selectedVariationType: String,
-        selectedVariationName: String,
+        selectedVariationType: String = "",
+        selectedVariationName: String = "",
         removeAll: Boolean = false
     ) {
         val userDoc = Firebase.firestore.collection("usuarios")
