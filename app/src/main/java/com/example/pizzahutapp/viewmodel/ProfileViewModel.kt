@@ -3,7 +3,6 @@ package com.example.pizzahutapp.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pizzahutapp.model.ProfileUiState
 import com.example.pizzahutapp.model.UserModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -13,10 +12,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+
+enum class UpdateStatus{
+    IDLE, LOADING, SUCCESS, ERROR
+}
+
+sealed class ProfileUiState {
+    object Loading : ProfileUiState()
+    data class Success(val user: UserModel) : ProfileUiState()
+    data class Error(val message: String) : ProfileUiState()
+}
 class ProfileViewModel  : ViewModel() {
 
     private val _userProfileState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val userProfileState: StateFlow<ProfileUiState> = _userProfileState
+
+    private val _updateStatus  = MutableStateFlow(UpdateStatus.IDLE)
+    val updateStatus: StateFlow<UpdateStatus> = _updateStatus
 
     init {
         loadUserProfile()
@@ -67,5 +79,35 @@ class ProfileViewModel  : ViewModel() {
                 Log.e("ProfileViewModel", "Error getting user data: ${e.message}", e)
             }
         }
+    }
+
+    fun updateProfile(updates: Map<String, Any>){
+        _updateStatus.value = UpdateStatus.LOADING
+        viewModelScope.launch {
+            val userId = Firebase.auth.currentUser?.uid
+            if (userId == null){
+                _updateStatus.value = UpdateStatus.ERROR
+                Log.e("ProfileViewModel","User not authenticated for update")
+                return@launch
+            }
+             val db = Firebase.firestore
+            try {
+                db.collection("usuarios").document(userId).update(updates).await()
+                _updateStatus.value = UpdateStatus.SUCCESS
+                Log.d("ProfileViewModel", "Profile updated succesfully $updates")
+                loadUserProfile()
+            } catch (e: Exception){
+                _updateStatus.value = UpdateStatus.ERROR
+                Log.e("ProfileViewModel", "Error udpating profile: ${e.message}", e)
+            }
+
+            fun resetUpdateStatus() {
+                _updateStatus.value = UpdateStatus.IDLE
+            }
+        }
+    }
+
+    fun resetUpdateStatus() {
+        _updateStatus.value = UpdateStatus.IDLE
     }
 }

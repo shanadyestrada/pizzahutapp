@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,9 +16,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pizzahutapp.model.ProfileUiState
+import com.example.pizzahutapp.GlobalNavigation.navController
+import com.example.pizzahutapp.Routes
 import com.example.pizzahutapp.viewmodel.ProfileViewModel
 
 @Composable
@@ -50,8 +54,18 @@ fun ProfilePage(
                 Text(text = "Teléfono: ${user.telefono}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Email: ${user.email}", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "ID de Usuario: ${user.userId}", style = MaterialTheme.typography.bodySmall)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {
+                        navController.navigate(Routes.EDIT_PROFILE)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC02128))
+                ) {
+                    Text(text = "Editar Perfil")
+                }
+
             }
             is ProfileUiState.Error -> {
                 val errorMessage = (uiState as ProfileUiState.Error).message

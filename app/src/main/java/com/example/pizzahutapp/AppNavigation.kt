@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.pizzahutapp.pages.CategoryProductsPage
 import com.example.pizzahutapp.pages.CheckoutPage
+import com.example.pizzahutapp.pages.EditProfilePage
 import com.example.pizzahutapp.pages.MyAccountPage // Make sure this is MyAccountPage as you used it
 import com.example.pizzahutapp.pages.ProfilePage
 import com.example.pizzahutapp.pages.ProductDetailsPage
@@ -37,13 +38,14 @@ object Routes {
     const val MENU = "menu"
     const val LOCATIONS = "locations"
     const val CART = "cart"
-    const val ACCOUNT = "account" // This is the key route for your MyAccountPage
+    const val ACCOUNT = "account"
     const val CATEGORY_PRODUCTS = "category-products/{categoryId}"
     const val PRODUCT_DETAILS = "product-details/{productId}"
     const val CHECKOUT = "checkout"
     const val PROFILE_DETAILS = "profile_details"
     const val MY_ADDRESSES = "my_addresses"
     const val MY_ORDERS = "my_orders"
+    const val EDIT_PROFILE = "edit_profile"
 }
 
 @Composable
@@ -83,40 +85,38 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             CheckoutPage(modifier)
         }
 
-        composable(Routes.ACCOUNT) { // This route is what the bottom nav's "Cuenta" item points to
-            MyAccountPage(modifier,navController)
+        composable(Routes.ACCOUNT) {
+            MyAccountPage(modifier)
         }
 
         composable(Routes.PROFILE_DETAILS) {
-            // This route is the destination when "Mi información" is clicked from MyAccountPage.
-            ProfilePage(modifier = modifier)
+
+            ProfilePage(modifier)
         }
 
         composable(Routes.MY_ADDRESSES) {
-            // This is a placeholder for your "Mis direcciones" screen.
-            // You'll replace `Text("My Addresses Screen")` with your actual Composable.
             Text(text = "Mis Direcciones", modifier = modifier)
         }
 
         composable(Routes.MY_ORDERS) {
-            // This is a placeholder for your "Ver mis pedidos" screen.
-            // You'll replace `Text("My Orders Screen")` with your actual Composable.
             Text(text = "Mis Pedidos", modifier = modifier)
         }
         composable(Routes.MENU) {
-            // Placeholder/direct link for 'Menu' tab.
-            // You might want to pass a default category ID or navigate to a MenuCategoriesScreen
+
             CategoryProductsPage(modifier, "default_category_id_for_menu_tab")
         }
 
         composable(Routes.LOCATIONS) {
-            // Placeholder for 'Locales' tab.
+
             Text(text = "Locales", modifier = modifier)
         }
 
         composable(Routes.CART) {
-            // Placeholder for 'Carrito' tab.
             Text(text = "Carrito", modifier = modifier)
+        }
+
+        composable(Routes.EDIT_PROFILE) {
+            EditProfilePage(modifier = modifier)
         }
 
     }

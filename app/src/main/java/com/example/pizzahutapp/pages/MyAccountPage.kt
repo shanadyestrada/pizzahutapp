@@ -20,7 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.pizzahutapp.GlobalNavigation
+import com.example.pizzahutapp.GlobalNavigation.navController
 import com.example.pizzahutapp.R
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 object Routes {
     const val MY_ACCOUNT = "my_account"
@@ -32,8 +36,7 @@ object Routes {
 
 @Composable
 fun MyAccountPage(
-    modifier: Modifier = Modifier,
-    navController: NavController
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -79,15 +82,14 @@ fun MyAccountPage(
         AccountActionButton(
             text = "Cerrar Sesión",
             onClick = {
-                navController.navigate(Routes.LOGIN) {
-                    // Pop up to the start destination to clear back stack
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = true
-                    }
+                Firebase.auth.signOut()
+                navController.navigate("auth") {
+
+                    popUpTo("home") { inclusive = true }
                 }
             },
-            backgroundColor = Color.Black, // Black as per image
-            textColor = Color.White // White text on black button
+            backgroundColor = Color.Black,
+            textColor = Color.White
         )
     }
 }
