@@ -277,7 +277,8 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
         Spacer(modifier = Modifier.height(20.dp))
         Button(onClick = {
             isLoading = true
-            authViewModel.signup(email, nombre, apellidos, fechaNacimiento, telefono, password) {sucess,errorMesagge ->
+            authViewModel.signup(email, nombre, apellidos, password, fechaNacimiento,telefono)
+            {sucess,errorMesagge ->
                 if (sucess) {
                     isLoading = false
                     navController.navigate("home") {
