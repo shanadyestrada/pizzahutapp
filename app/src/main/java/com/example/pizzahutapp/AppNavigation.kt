@@ -3,12 +3,13 @@ package com.example.pizzahutapp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold // Import Scaffold
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -19,7 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.pizzahutapp.pages.CategoryProductsPage
 import com.example.pizzahutapp.pages.CheckoutPage
 import com.example.pizzahutapp.pages.EditProfilePage
-import com.example.pizzahutapp.pages.MyAccountPage // Make sure this is MyAccountPage as you used it
+import com.example.pizzahutapp.pages.MyAccountPage
 import com.example.pizzahutapp.pages.ProfilePage
 import com.example.pizzahutapp.pages.ProductDetailsPage
 import com.example.pizzahutapp.screen.AuthScreen
@@ -116,7 +117,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
 
         composable(Routes.EDIT_PROFILE) {
-            EditProfilePage(modifier = modifier)
+            EditProfilePage(
+                modifier = modifier,
+                navController = navController,
+                profileViewModel = viewModel()
+            )
         }
 
     }

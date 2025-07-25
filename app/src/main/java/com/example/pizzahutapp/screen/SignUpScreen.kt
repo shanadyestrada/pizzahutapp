@@ -5,17 +5,29 @@ import android.widget.DatePicker
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,41 +36,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pizzahutapp.AppUtil
+import com.example.pizzahutapp.R
 import com.example.pizzahutapp.viewmodel.AuthViewModel
 import java.util.Calendar
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import com.example.pizzahutapp.R
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
-fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+fun SignUpScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel()
+) {
 
     var email by remember {
         mutableStateOf("")
@@ -117,21 +121,23 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
                 )
             }, year, month, day
         )
-    }.apply{
+    }.apply {
         datePicker.maxDate = System.currentTimeMillis()
     }
 
     val scrollState = rememberScrollState()
 
 
-    Column (modifier = Modifier
-        .fillMaxSize()
-        .padding(32.dp)
-        .verticalScroll(scrollState),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp)
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Text( text = "Bienvenidos!",
+    ) {
+        Text(
+            text = "Bienvenidos!",
             style = TextStyle(
                 fontSize = 30.sp,
                 fontFamily = FontFamily.Monospace,
@@ -140,7 +146,8 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
             )
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Text( text = "Registrate con nosotros!",
+        Text(
+            text = "Registrate con nosotros!",
             style = TextStyle(
                 fontSize = 22.sp,
             )
@@ -179,16 +186,17 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                datePickerDialog.show()
-            }
-            .border(
-                width = 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(4.dp)
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    datePickerDialog.show()
+                }
+                .border(
+                    width = 1.dp,
+                    color = Color.Black,
+                    shape = RoundedCornerShape(4.dp)
+                )
         ) {
             OutlinedTextField(
                 value = fechaNacimiento,
@@ -219,7 +227,7 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
             value = telefono,
             onValueChange = { newValue ->
                 val filteredValue = newValue.filter { it.isDigit() }
-                if (filteredValue.length <= 9){
+                if (filteredValue.length <= 9) {
                     telefono = filteredValue
                 }
             }, label = {
@@ -241,14 +249,19 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
                 Text(text = "Contraseña")
             },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = if(passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val imagePainter = if (passwordVisible)
                     painterResource(id = R.drawable.ic_visibility)
                 else painterResource(id = R.drawable.ic_visibility_off)
-                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                val description =
+                    if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(painter = imagePainter, contentDescription = description, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        painter = imagePainter,
+                        contentDescription = description,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         )
@@ -275,25 +288,27 @@ fun SignUpScreen(modifier: Modifier = Modifier, navController: NavController, au
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        Button(onClick = {
-            isLoading = true
-            authViewModel.signup(email, nombre, apellidos, password, fechaNacimiento,telefono)
-            {sucess,errorMesagge ->
-                if (sucess) {
-                    isLoading = false
-                    navController.navigate("home") {
-                        popUpTo("auth") {
-                            inclusive = true
+        Button(
+            onClick = {
+                isLoading = true
+                authViewModel.signup(email, nombre, apellidos, password, fechaNacimiento, telefono)
+                { sucess, errorMesagge ->
+                    if (sucess) {
+                        isLoading = false
+                        navController.navigate("home") {
+                            popUpTo("auth") {
+                                inclusive = true
+                            }
                         }
+                    } else {
+                        isLoading = false
+                        AppUtil.showToast(context, errorMesagge ?: "Algo salió mal..")
                     }
-                } else {
-                    isLoading = false
-                    AppUtil.showToast(context,errorMesagge?: "Algo salió mal..")
                 }
-            }
-        },
+            },
             enabled = !isLoading && acceptsTerms,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .height(60.dp)
         ) {
             Text(text = if (isLoading) "Creando la cuenta.." else "Registrarse", fontSize = 22.sp)

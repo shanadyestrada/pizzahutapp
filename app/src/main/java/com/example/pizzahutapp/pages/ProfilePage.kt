@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pizzahutapp.GlobalNavigation.navController
 import com.example.pizzahutapp.Routes
+import com.example.pizzahutapp.viewmodel.ProfileUiState
 import com.example.pizzahutapp.viewmodel.ProfileViewModel
 
 @Composable
