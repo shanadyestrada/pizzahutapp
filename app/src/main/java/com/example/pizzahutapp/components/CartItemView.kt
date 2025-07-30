@@ -1,7 +1,6 @@
 package com.example.pizzahutapp.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,34 +43,34 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
 @Composable
-fun CartItemView(modifier: Modifier = Modifier, cartItemId: String, itemDetails: Map<String, Any>) {
+fun CartItemView(modifier: Modifier = Modifier, productId: String, qty: Long) {
 
-    val productId = itemDetails["productId"] as? String ?: ""
-    val qty = itemDetails["quantity"] as? Long ?: 0L
-    val price = itemDetails["price"]?.toString() ?: "0.00"
-    val variationType = itemDetails["variationType"] as? String ?: ""
-    val variationName = itemDetails["varaitionName"] as? String ?: ""
+    val parts = productId.split("_")
+    val id = parts.getOrNull(0) ?: ""
+    val tamano = parts.getOrNull(1) ?: ""
+    val corteza = parts.getOrNull(2) ?: ""
 
-    var productBaseInfo by remember { mutableStateOf(ProductModel()) }
-
-    LaunchedEffect(key1 = productId) {
-        if(productId.isNotBlank()){
-            Firebase.firestore.collection("data")
-                .document("stock").collection("productos")
-                .document(productId).get().addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        val result = it.result.toObject(ProductModel::class.java)
-                        if (result!=null) {
-                            productBaseInfo = result
-                        }
-                    } else{
-
-                    }
-                }
-        }
+    var product by remember {
+        mutableStateOf(ProductModel())
     }
 
-    var context = LocalContext.current
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = id) {
+        Firebase.firestore.collection("data")
+            .document("stock")
+            .collection("productos")
+            .document(id)
+            .get()
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    val result = it.result.toObject(ProductModel::class.java)
+                    if (result != null) {
+                        product = result
+                    }
+                }
+            }
+    }
 
     Card(
         modifier = modifier
@@ -81,72 +80,72 @@ fun CartItemView(modifier: Modifier = Modifier, cartItemId: String, itemDetails:
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Row (
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Imagen del producto
+        Row(modifier = Modifier.fillMaxWidth()) {
+
+            // Imagen
             AsyncImage(
-                model = productBaseInfo.image,
-                contentDescription = productBaseInfo.nombre,
+                model = product.image,
+                contentDescription = product.nombre,
                 modifier = Modifier
                     .height(100.dp)
                     .width(100.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            // Contenido de texto
-            Column(modifier = Modifier.padding(16.dp).weight(1f)) {
+            // Contenido
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .weight(1f)
+            ) {
                 Text(
-                    text = if(variationType.isNotBlank() && variationName.isNotBlank()){
-                        "${productBaseInfo.nombre.uppercase()} (${variationType.replaceFirstChar{it.titlecase() }} - ${variationName.replaceFirstChar { it.titlecase() }})"
-                    } else {
-                        productBaseInfo.nombre.uppercase()
-                    },
+                    text = product.nombre.uppercase(),
                     fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 16.sp
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
+                // Mostrar tamaño y corteza solo si el producto tiene variaciones
+                if (product.variaciones != null) {
+                    if (tamano.isNotEmpty()) {
+                        Text(text = "Tamaño: ${tamano.replaceFirstChar { it.uppercase() }}", fontSize = 12.sp)
+                    }
+                    if (corteza.isNotEmpty()) {
+                        Text(text = "Corteza: ${corteza.replaceFirstChar { it.uppercase() }}", fontSize = 12.sp)
+                    }
+                }
 
                 Text(
-                    text = "S/. ${price}",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
+                    text = "S/. ${product.precio}",
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
 
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ){
-                    IconButton(onClick = { AppUtil.removeFromCart(context, productId, variationType, variationName)}) {
-                        Text(text = "-", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        AppUtil.removeFromCart(context, id, tamano, corteza)
+                    }) {
+                        Text(text = "-", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    Text(text= "$qty", fontSize = 16.sp)
+                    Text(text = "$qty", fontSize = 16.sp)
 
-                    IconButton(onClick = {AppUtil.addToCart(context, productId, variationType, variationName, price)}) {
-                        Text(text = "+", fontSize = 20.sp,  fontWeight = FontWeight.Bold)
+                    IconButton(onClick = {
+                        AppUtil.addToCart(context, id, tamano, corteza)
+                    }) {
+                        Text(text = "+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
-
-
-            IconButton(
-                onClick = { AppUtil.removeFromCart(context, productId, variationType, variationName,removeAll = true) },
-                modifier = Modifier.align(Alignment.CenterVertically)
-            ) {
+            IconButton(onClick = {
+                AppUtil.removeFromCart(context, id, tamano, corteza, removeAll = true)
+            }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar del carrito",
-                    tint = MaterialTheme.colorScheme.error
+                    contentDescription = "Eliminar del carrito"
                 )
             }
         }
     }
-
 }
