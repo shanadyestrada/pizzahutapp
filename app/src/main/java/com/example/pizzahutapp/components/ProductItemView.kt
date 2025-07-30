@@ -15,9 +15,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,10 +42,28 @@ import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.GlobalNavigation
 import com.example.pizzahutapp.model.ProductModel // Asegúrate de que esta importación sea correcta
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
 
-    var context = LocalContext.current
+    val context = LocalContext.current
+    var selectedVariationType by remember {
+        mutableStateOf(product.variaciones.keys.firstOrNull() ?: "")
+    }
+
+    var selectedVariationName by remember {
+        mutableStateOf(
+            product.variaciones[selectedVariationType]?.keys?.firstOrNull() ?: ""
+        )
+    }
+
+    val currentPrice = remember(selectedVariationType, selectedVariationName){
+        if(selectedVariationType.isNotBlank() && selectedVariationName.isNotBlank()){
+            product.variaciones[selectedVariationType]?.get(selectedVariationName) ?: product.precio
+        }else{
+            product.precio
+        }
+    }
 
     Card(
         modifier = modifier
@@ -84,8 +111,95 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                if(product.variaciones.isNotEmpty()){
+                    var expandedType by remember { mutableStateOf(false)}
+
+                    ExposedDropdownMenuBox(
+                        expanded = expandedType,
+                        onExpandedChange = { expandedType = !expandedType },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextField(
+                            value = selectedVariationType.takeIf{it.isNotBlank()} ?: "Select Type",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Tamaño")},
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedType,
+                            onDismissRequest = { expandedType = false }
+                        ){
+                            product.variaciones.keys.forEach { type ->
+                                DropdownMenuItem(
+                                    text = {Text(type.replaceFirstChar {if (it.isLowerCase()) it.titlecase() else it.toString()})},
+                                    onClick = {
+                                        selectedVariationType = type
+                                        selectedVariationName = product.variaciones[type]?.keys?.firstOrNull() ?: ""
+                                        expandedType = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (product.variaciones[selectedVariationType]?.isNotEmpty() == true){
+                        var expandedName by remember {mutableStateOf(false)}
+
+                        ExposedDropdownMenuBox(
+                            expanded = expandedName,
+                            onExpandedChange = {expandedName = !expandedName},
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            TextField(
+                                value = selectedVariationName.takeIf{it.isNotBlank()} ?: "Select Variation",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Variación")},
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedName)
+                                },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedName,
+                                onDismissRequest = { expandedName = false}
+                            ){
+                                product.variaciones[selectedVariationType]?.forEach { (name, _)->
+                                    DropdownMenuItem(
+                                        text = {Text(name.replaceFirstChar {if (it.isLowerCase()) it.titlecase() else it.toString() }) },
+                                        onClick = {
+                                            selectedVariationName = name
+                                            expandedName = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    } else if (selectedVariationType.isNotBlank()){
+                        Text(
+                            text = "No hay variaciones para este tamaño",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 Text(
-                    text = "S/. ${product.precio}", // Usar el precio directamente como String
+                    text = "S/. $currentPrice", // Usar el precio directamente como String
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary // Color principal para el precio
@@ -94,7 +208,11 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { AppUtil.addToCart(context, product.id) },
+                    onClick = {
+                        AppUtil.addToCart(
+                            context, product.id, selectedVariationType, selectedVariationName, currentPrice
+                        )
+                    },
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // <-- ¡CAMBIO AQUÍ!
