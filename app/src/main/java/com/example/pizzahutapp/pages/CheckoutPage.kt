@@ -27,9 +27,10 @@ fun CheckoutPage(modifier: Modifier = Modifier) {
 
     fun calculateTotal() {
         total.value = 0f
-        userModel.value.cartItems.forEach { (fullId, qty) ->
+        userModel.value.cartItems.forEach { (fullId, itemMap) ->
             val product = productMap[fullId]
             if (product != null && product.precio.isNotEmpty()) {
+                val qty = (itemMap["qty"] as? Long) ?: 0L
                 total.value += product.precio.toFloat() * qty
             }
         }
@@ -81,11 +82,14 @@ fun CheckoutPage(modifier: Modifier = Modifier) {
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        userModel.value.cartItems.forEach { (fullId, qty) ->
+        userModel.value.cartItems.forEach { (fullId, itemMap) ->
             val parts = fullId.split("_")
             val tamano = parts.getOrNull(1) ?: ""
             val corteza = parts.getOrNull(2) ?: ""
             val product = productMap[fullId] ?: return@forEach
+
+            // Accede al valor de "qty" dentro del mapa anidado
+            val qty = (itemMap["qty"] as? Long) ?: 0L
             val subtotal = product.precio.toFloat() * qty
 
             val nameBuilder = StringBuilder(product.nombre)
