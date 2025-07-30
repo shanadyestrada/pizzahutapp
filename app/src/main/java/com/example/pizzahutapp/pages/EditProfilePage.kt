@@ -1,5 +1,6 @@
 package com.example.pizzahutapp.pages
 
+import android.widget.Space
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,9 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.pizzahutapp.GlobalNavigation.navController
 import com.example.pizzahutapp.viewmodel.ProfileUiState
 import com.example.pizzahutapp.viewmodel.ProfileViewModel
@@ -35,6 +40,7 @@ import com.example.pizzahutapp.viewmodel.UpdateStatus
 @Composable
 fun EditProfilePage(
     modifier: Modifier,
+    navController: NavController,
     profileViewModel: ProfileViewModel = viewModel()
 ){
 
@@ -44,24 +50,31 @@ fun EditProfilePage(
 
     var userName by remember { mutableStateOf("") }
     var userSurname by remember { mutableStateOf("") }
+    var userPhone by remember {mutableStateOf("")}
 
     LaunchedEffect(uiState) {
         if(uiState is ProfileUiState.Success){
             val user = (uiState as ProfileUiState.Success).user
             userName = user.nombre
             userSurname = user.apellidos
+            userPhone = user.telefono
         }
     }
 
     LaunchedEffect(updateStatus) {
         when(updateStatus){
             UpdateStatus.SUCCESS -> {
-                Toast.makeText(context, "Perfil actualizado con exito", Toast.LENGTH_SHORT)
+                Toast.makeText(context, "Perfil actualizado con exito", Toast.LENGTH_SHORT).show()
                 profileViewModel.resetUpdateStatus()
-                navController.popBackStack()
+                navController.navigate(Routes.PROFILE_DETAILS){
+                    popUpTo(Routes.PROFILE_DETAILS){
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
             }
             UpdateStatus.ERROR -> {
-                Toast.makeText(context, "Error al actualizar el perfil", Toast.LENGTH_SHORT)
+                Toast.makeText(context, "Error al actualizar el perfil", Toast.LENGTH_SHORT).show()
                 profileViewModel.resetUpdateStatus()
             }
             else -> {}
@@ -101,6 +114,89 @@ fun EditProfilePage(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
+                OutlinedTextField(
+                    value = userSurname,
+                    onValueChange = { userSurname = it},
+                    label = {Text("Apellidos")},
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Phone TextField
+                OutlinedTextField(
+                    value = userPhone,
+                    onValueChange = { newValue ->
+                        if(newValue.length <= 9 && newValue.all {it.isDigit()}){
+                            userPhone = newValue
+                        }
+                    },
+                    label = { Text("Teléfono") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(onClick = {
+                    if(userName.isBlank() || userSurname.isBlank() || userPhone.isBlank()){
+                        Toast.makeText(context, "Por favor completo todos los campos.", Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+
+                    val updates = mutableMapOf<String, Any>()
+                    val currentUser = (uiState as ProfileUiState.Success).user
+                    if (userName != currentUser.nombre){
+                        updates["nombre"] = userName
+                    }
+                    if (userSurname != currentUser.apellidos){
+                        updates["apellidos"] = userSurname
+                    }
+                    if (userPhone.length == 9 && userPhone != currentUser.telefono){
+                        updates["telefono"] = userPhone
+                    } else if(userPhone.length != 9 && userPhone.isNotEmpty()){
+                        Toast.makeText(context, "El numero de telefono debe tener 9 digitos", Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+
+                    if(updates.isNotEmpty()){
+                        profileViewModel.updateProfile(updates)
+                    } else {
+                        Toast.makeText(context, "No hay cambios para guardar", Toast.LENGTH_LONG).show()
+                        navController.navigate(Routes.PROFILE_DETAILS){
+                            popUpTo(Routes.PROFILE_DETAILS){inclusive = true}
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC02128)),
+                    enabled = updateStatus != UpdateStatus.LOADING
+                ) {
+                    if (updateStatus == UpdateStatus.LOADING){
+                        CircularProgressIndicator(color = Color.White)
+                    } else {
+                        Text(text = "Guardar cambios", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = {
+                    navController.popBackStack()
+                },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
+                    enabled = updateStatus != UpdateStatus.LOADING
+                ) {
+                    Text(text = "Cancelar", style = MaterialTheme.typography.titleMedium, color = Color.Black)
+                }
             }
         }
 
