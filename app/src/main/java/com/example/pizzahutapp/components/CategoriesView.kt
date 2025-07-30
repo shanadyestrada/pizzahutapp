@@ -46,7 +46,7 @@ fun CategoriesView(modifier: Modifier = Modifier) {
                     }
                     categoryList.value = resultList
                 } else {
-                    // Manejar error aquí
+
                 }
             }
     }

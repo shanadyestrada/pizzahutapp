@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pizzahutapp"
-        minSdk = 26
+        minSdk = 34
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -60,6 +60,18 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation ("io.coil-kt:coil-compose:2.2.0")
+    implementation ("io.coil-kt:coil-compose:2.7.0")
     implementation("com.tbuonomo:dotsindicator:5.1.0")
+
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
+
 }
+

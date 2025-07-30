@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -43,6 +44,7 @@ import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.R // Asegúrate de que este sea el paquete correcto para tus recursos
 import com.example.pizzahutapp.ui.theme.BrixtonLeadFontFamily
 import com.example.pizzahutapp.viewmodel.AuthViewModel
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
@@ -53,6 +55,10 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
 
     var password by remember {
         mutableStateOf("")
+    }
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
     }
 
     var isLoading by remember {
@@ -106,7 +112,19 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
             onValueChange = { password = it },
             label = { Text(text = "Contraseña") },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val imagePainter = if (passwordVisible)
+                    painterResource(id= R.drawable.ic_visibility)
+                else
+                    painterResource(id = R.drawable.ic_visibility_off)
+
+                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                IconButton(onClick = {passwordVisible = !passwordVisible}) {
+                    Icon(painter = imagePainter, contentDescription = description, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         )
 
         // Enlace "¿Olvidaste tu contraseña?"
@@ -156,6 +174,41 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 fontWeight = FontWeight.Bold
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //boton iniciar sesion de google
+        Button(
+            onClick = {
+                isLoading = true
+                authViewModel.signInWithGoogleCredentialManager(context) { success, errorMessage ->
+                    isLoading = false
+                    if (success) {
+                        navController.navigate("home") {
+                            popUpTo("auth") {
+                                inclusive = true
+                            }
+                        }
+                    } else {
+                        AppUtil.showToast(context, errorMessage ?: "Error desconocido con Google Sign-In.")
+                    }
+                }
+            },
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_google), // Asegúrate de tener este drawable
+                contentDescription = "Google Icon",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Iniciar sesión con Google", fontSize = 18.sp)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Enlace "¿Usuario nuevo? Crea tu cuenta aquí"
         Row(

@@ -9,8 +9,10 @@ import com.google.firebase.firestore.firestore
 
 object AppUtil {
 
-    fun showToast(context : Context, mesagge : String) {
-        Toast.makeText(context,mesagge,Toast.LENGTH_LONG).show()
+    lateinit var applicationContext: Context // Add this line
+
+    fun showToast(context : Context, message : String) {
+        Toast.makeText(context,message,Toast.LENGTH_LONG).show()
     }
 
     fun addToCart(
@@ -79,5 +81,4 @@ object AppUtil {
             }
         }
     }
-
 }

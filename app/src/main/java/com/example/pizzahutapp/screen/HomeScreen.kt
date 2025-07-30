@@ -32,6 +32,7 @@ import com.example.pizzahutapp.pages.CartPage
 import com.example.pizzahutapp.pages.FavoritePage
 import com.example.pizzahutapp.pages.HomePage
 import com.example.pizzahutapp.pages.LocalPage
+import com.example.pizzahutapp.pages.MyAccountPage
 import com.example.pizzahutapp.pages.ProfilePage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -50,7 +51,6 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
     var selectedIndex by rememberSaveable {
         mutableStateOf(0)
     }
-
 
 
 
@@ -83,7 +83,7 @@ fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
         1 -> FavoritePage(modifier)
         2 -> LocalPage(modifier)
         3 -> CartPage(modifier)
-        4 -> ProfilePage(modifier)
+        4 -> MyAccountPage(modifier)
     }
 }
 
