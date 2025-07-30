@@ -1,35 +1,17 @@
 package com.example.pizzahutapp.pages
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pizzahutapp.AppUtil
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.platform.LocalContext
 import com.example.pizzahutapp.model.ProductModel
 import com.example.pizzahutapp.model.UserModel
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
@@ -37,133 +19,117 @@ import com.google.firebase.firestore.toObject
 @Composable
 fun CheckoutPage(modifier: Modifier = Modifier) {
 
-    val userModel = remember {
-        mutableStateOf(UserModel())
-    }
+    val userModel = remember { mutableStateOf(UserModel()) }
+    val productMap = remember { mutableStateMapOf<String, ProductModel>() }
+    val total = remember { mutableStateOf(0f) }
+
     val context = LocalContext.current
 
-    // No need for productList now, as cartItems directly contain the necessary info
-
-    // Using a DisposableEffect to listen to real-time cart changes
-    DisposableEffect(key1 = Unit) {
-        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-        if (currentUserUid == null) {
-            // Handle not logged in case if necessary (e.g., navigate to login)
-            return@DisposableEffect onDispose {} // Dispose immediately if no user
-        }
-
-        val listenerRegistration = Firebase.firestore.collection("usuarios")
-            .document(currentUserUid)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    // Use the captured 'context' directly here
-                    AppUtil.showToast(context, "Error al cargar carrito: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && snapshot.exists()) {
-                    val result = snapshot.toObject(UserModel::class.java)
-                    if (result != null) {
-                        userModel.value = result
-                    }
-                } else {
-                    // Cart document might not exist, or user signed out
-                    userModel.value = UserModel()
-                }
+    fun calculateTotal() {
+        total.value = 0f
+        userModel.value.cartItems.forEach { (fullId, itemMap) ->
+            val product = productMap[fullId]
+            if (product != null && product.precio.isNotEmpty()) {
+                val qty = (itemMap["qty"] as? Long) ?: 0L
+                total.value += product.precio.toFloat() * qty
             }
-        onDispose {
-            listenerRegistration.remove()
         }
     }
 
-    // Calculate total price based on the current userModel.value.cartItems
-    val totalPrice = remember(userModel.value.cartItems) { // Recalculate when cartItems change
-        userModel.value.cartItems.values.sumOf { itemDetails ->
-            val price = (itemDetails["price"] as? Double) ?: 0.0
-            val quantity = (itemDetails["quantity"] as? Long)?.toDouble() ?: 0.0
-            price * quantity
+    LaunchedEffect(Unit) {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
+
+        val userDoc = com.google.firebase.Firebase.firestore.collection("usuarios")
+            .document(currentUserUid)
+
+        userDoc.get().addOnSuccessListener { doc ->
+            val user = doc.toObject<UserModel>()
+            if (user != null) {
+                userModel.value = user
+
+                val ids = user.cartItems.keys.map { it.split("_")[0] }.distinct()
+                if (ids.isNotEmpty()) {
+                    com.google.firebase.Firebase.firestore.collection("data")
+                        .document("stock").collection("productos")
+                        .whereIn("id", ids)
+                        .get()
+                        .addOnSuccessListener { snapshot ->
+                            val products = snapshot.toObjects(ProductModel::class.java)
+
+                            productMap.clear()
+                            user.cartItems.forEach { (fullId, _) ->
+                                val id = fullId.split("_")[0]
+                                val product = products.find { it.id == id }
+                                if (product != null) {
+                                    productMap[fullId] = product
+                                }
+                            }
+
+                            calculateTotal()
+                        }
+                }
+            }
         }
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
     ) {
-        Text(
-            text = "Checkout",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = "Checkout", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Display individual cart items using LazyColumn
-        if (userModel.value.cartItems.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                // This 'items' function should now resolve after the import
-                items(userModel.value.cartItems.entries.toList(), key = { it.key }) { (cartItemId, itemDetails) ->
-                    val productName = itemDetails["nombre"] as? String ?: "Producto Desconocido"
-                    val itemPrice = (itemDetails["price"] as? Double) ?: 0.0
-                    val itemQuantity = (itemDetails["quantity"] as? Long) ?: 0L
+        userModel.value.cartItems.forEach { (fullId, itemMap) ->
+            val parts = fullId.split("_")
+            val tamano = parts.getOrNull(1) ?: ""
+            val corteza = parts.getOrNull(2) ?: ""
+            val product = productMap[fullId] ?: return@forEach
 
-                    if (itemQuantity > 0) {
-                        val productSubtotal = itemPrice * itemQuantity
-                        RowCheckoutItems(
-                            title = "$productName (x$itemQuantity)",
-                            value = "S/. ${String.format("%.2f", productSubtotal)}"
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-        } else {
-            Column(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Tu carrito está vacío.",
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            // Accede al valor de "qty" dentro del mapa anidado
+            val qty = (itemMap["qty"] as? Long) ?: 0L
+            val subtotal = product.precio.toFloat() * qty
+
+            val nameBuilder = StringBuilder(product.nombre)
+            if (tamano.isNotEmpty()) nameBuilder.append(" - ${tamano.replaceFirstChar { it.uppercase() }}")
+            if (corteza.isNotEmpty()) nameBuilder.append(" (${corteza.replaceFirstChar { it.uppercase() }})")
+
+            RowCheckoutItems(
+                title = "${nameBuilder} x$qty",
+                value = "S/. ${String.format("%.2f", subtotal)}"
+            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Total price display
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Total",
-            textAlign = TextAlign.End, // Align to end
-            fontSize = 20.sp, // Slightly larger
-            fontWeight = FontWeight.Bold
+            textAlign = TextAlign.Center
         )
 
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = "S/. ${String.format("%.2f", totalPrice)}",
+            text = "S/. ${String.format("%.2f", total.value)}",
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End // Align to end
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-fun RowCheckoutItems(title : String, value : String) {
-    Row (
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+fun RowCheckoutItems(title: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text (text = title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
         Text(text = value, fontSize = 18.sp)
     }
 }

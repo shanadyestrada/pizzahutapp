@@ -2,9 +2,7 @@ package com.example.pizzahutapp.viewmodel
 
 import android.content.Context
 import android.credentials.GetCredentialException
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pizzahutapp.model.UserModel

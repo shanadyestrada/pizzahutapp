@@ -1,5 +1,6 @@
 package com.example.pizzahutapp.pages
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import coil.compose.AsyncImage
 import com.example.pizzahutapp.AppUtil
 import com.example.pizzahutapp.model.ProductModel
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 
 @Composable
@@ -37,7 +39,10 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
         mutableStateOf(ProductModel())
     }
 
-    var context = LocalContext.current
+    var selectedTamano by remember { mutableStateOf("") }
+    var selectedCorteza by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
 
     LaunchedEffect(key1 = Unit) {
         Firebase.firestore.collection("data").document("stock")
@@ -45,8 +50,8 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
             .document(productId).get()
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    var result = it.result.toObject(ProductModel::class.java)
-                    if (result!=null) {
+                    val result = it.result.toObject(ProductModel::class.java)
+                    if (result != null) {
                         product = result
                     }
                 }
@@ -59,7 +64,6 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-
         AsyncImage(
             model = product.image,
             contentDescription = product.nombre,
@@ -71,13 +75,15 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
         )
         Spacer(modifier = Modifier.padding(8.dp))
 
-        Text(text = product.nombre,
+        Text(
+            text = product.nombre,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
             modifier = Modifier.padding(8.dp)
         )
 
-        Text(text = product.descripcion,
+        Text(
+            text = product.descripcion,
             fontWeight = FontWeight.Normal,
             fontSize = 20.sp,
             modifier = Modifier.padding(8.dp)
@@ -85,7 +91,8 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
 
         Spacer(modifier = Modifier.padding(8.dp))
 
-        Text(text = "S/. ${product.precio}",
+        Text(
+            text = "S/. ${product.precio}",
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.sp,
             modifier = Modifier.padding(8.dp)
@@ -93,15 +100,87 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId : String) {
 
         Spacer(modifier = Modifier.padding(8.dp))
 
-        Button(onClick = {
-            AppUtil.addToCart(context, productId)
-        },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
-        ) {
-            Text(text = "Agregar al Carrito", fontSize = 18.sp)
+        // SOLO si el producto tiene variaciones (es decir, si es pizza)
+        if (product.variaciones != null) {
+            // SECCIÓN: Selección de tamaño
+            Text("Selecciona Tamaño:", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val tamanos = listOf("familiar", "grande", "mediana")
+            tamanos.forEach { tamano ->
+                val isSelected = selectedTamano == tamano
+                Button(
+                    onClick = { selectedTamano = tamano },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = tamano.replaceFirstChar { it.uppercase() },
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // SECCIÓN: Selección de corteza
+            Text("Selecciona Corteza:", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val cortezas = listOf("artesanal", "delgada", "panPizza")
+            cortezas.forEach { corteza ->
+                val isSelected = selectedCorteza == corteza
+                Button(
+                    onClick = { selectedCorteza = corteza },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = corteza.replaceFirstChar { it.uppercase() },
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // BOTÓN AGREGAR AL CARRITO
+        Button(
+            onClick = {
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@Button
+
+                if (product.variaciones == null) {
+                    // Producto sin variaciones (bebidas, entradas)
+                    AppUtil.addToCart(
+                        context,
+                        productId = product.id,
+                        tamano = "",
+                        corteza = ""
+                    )
+                } else {
+                    if (selectedTamano.isNotEmpty() && selectedCorteza.isNotEmpty()) {
+                        AppUtil.addToCart(
+                            context,
+                            productId = product.id,
+                            tamano = selectedTamano,
+                            corteza = selectedCorteza
+                        )
+                    } else {
+                        Toast.makeText(context, "Selecciona tamaño y corteza", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Agregar al Carrito", fontSize = 18.sp)
+        }
     }
-
-
 }
+
