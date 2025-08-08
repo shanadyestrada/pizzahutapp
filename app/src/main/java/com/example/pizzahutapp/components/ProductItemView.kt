@@ -104,8 +104,6 @@ fun ProductItemView(modifier: Modifier = Modifier, product: ProductModel) {
                 ) {
                     Text(text = "Ver Producto", fontSize = 16.sp)
                 }
-
-
             }
         }
     }
