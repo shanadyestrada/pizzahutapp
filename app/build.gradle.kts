@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pizzahutapp"
-        minSdk = 34
+        minSdk = 28
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -72,6 +72,8 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
+
+    implementation("com.google.maps.android:maps-compose:4.4.1")
 
 }
 

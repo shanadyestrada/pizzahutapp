@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PizzaHutApp"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBblkXiAvb3HWKpeZ6tuVZVji_7McOmU84" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
